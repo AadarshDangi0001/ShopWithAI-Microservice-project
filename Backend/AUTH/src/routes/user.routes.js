@@ -1,7 +1,8 @@
 import express from 'express';
-import { authenticateToken } from '../middlewares/auth.middleware';
-import { addUserAddress, deleteUserAddress, getUserAddresses } from '../controllers/user.controller';
-import { addUserAddressValidator } from '../middlewares/validator.middleware';
+import { authenticateToken } from '../middlewares/auth.middleware.js';
+import { addUserAddress, deleteUserAddress, getUserAddresses } from '../controllers/user.controller.js';
+import { addUserAddressValidator } from '../middlewares/validator.middleware.js';
+
 
 
 const router = express.Router();

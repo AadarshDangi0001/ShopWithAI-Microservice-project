@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import redis from "../db/redis.js";
 
 async function registerUser(req, res) {
-    const { username, email, password, fullName = {} } = req.body;
+    const { username, email, password, fullName   = {} ,role} = req.body;
     const { firstName, lastName } = fullName;
 
     try {
@@ -25,7 +25,9 @@ async function registerUser(req, res) {
             fullName: {
                 firstName,
                 lastName
-            }
+            },
+            role: role || 'user'
+
         });
 
         const token = jwt.sign({
