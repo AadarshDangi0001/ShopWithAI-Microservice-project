@@ -1,6 +1,7 @@
 import userModel from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import redis from "../db/redis.js";
 
 async function registerUser(req, res) {
     const { username, email, password, fullName = {} } = req.body;
@@ -123,5 +124,37 @@ async function getCurrentUser(req, res) {
     });
 }
 
-export { registerUser, loginUser, getCurrentUser };
+async function logoutUser(req, res) {
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        expires: new Date(0)
+    };
+
+    try {
+        const decoded = jwt.decode(token);
+        const ttlSeconds = decoded?.exp
+            ? Math.max(decoded.exp - Math.floor(Date.now() / 1000), 0)
+            : 0;
+
+        if (ttlSeconds > 0 && typeof redis?.set === 'function') {
+            await redis.set(`bl:${token}`, 'true', 'EX', ttlSeconds || 1);
+        }
+    } catch (error) {
+        console.error('Error blacklisting token:', error);
+    } finally {
+        res.cookie('token', '', cookieOptions);
+    }
+
+    return res.status(200).json({ message: 'User logged out successfully' });
+}
+
+export { registerUser, loginUser, getCurrentUser, logoutUser };
 
