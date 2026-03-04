@@ -1,34 +1,39 @@
 import dotenv from 'dotenv';
 import ImageKit from '@imagekit/nodejs';
+import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
 
-const { IMAGEKIT_URL_ENDPOINT, IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, NODE_ENV } = process.env;
+const imagekit = new ImageKit({
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
 
-let imagekitClient;
-
-if (NODE_ENV === 'test') {
-  imagekitClient = {
-    async upload({ fileName }) {
-      return {
-        url: `https://example.com/${fileName}`,
-        thumbnailUrl: `https://example.com/thumb-${fileName}`,
-        fileId: `test_${fileName}`,
-      };
-    },
-  };
-} else if (IMAGEKIT_URL_ENDPOINT && IMAGEKIT_PUBLIC_KEY && IMAGEKIT_PRIVATE_KEY) {
-  imagekitClient = new ImageKit({
-    urlEndpoint: IMAGEKIT_URL_ENDPOINT,
-    publicKey: IMAGEKIT_PUBLIC_KEY,
-    privateKey: IMAGEKIT_PRIVATE_KEY,
-  });
-} else {
-  imagekitClient = {
-    async upload() {
-      throw new Error('ImageKit credentials are not configured');
-    },
-  };
+export async function uploadImage(file) {
+    try {
+        const result = await imagekit.upload({
+            file: file.buffer,
+            fileName: `${uuidv4()}-${file.originalname}`,
+            folder: '/products'
+        });
+        return{
+            url: result.url,
+            thumbnail: result.thumbnailUrl,
+            id: result.fileId
+        };
+    } catch (error) {
+        console.error('Error uploading image to ImageKit:', error);
+        throw new Error('Image upload failed');
+    }
 }
 
-export default imagekitClient;
+export async function deleteImage(imageUrl) {
+    try {
+        const fileId = imageUrl.split('/').slice(-1)[0].split('.')[0];
+        await imagekit.deleteFile(fileId);
+    } catch (error) {
+        console.error('Error deleting image from ImageKit:', error);
+        throw new Error('Image deletion failed');
+    }
+}

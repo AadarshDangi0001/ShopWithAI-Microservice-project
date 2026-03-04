@@ -1,54 +1,33 @@
 import Product from '../model/product.model.js';
-import imagekit from '../services/imagekit.service.js';
-
-const REQUIRED_FIELDS = ['title', 'description', 'priceAmount', 'seller'];
-
-function validateRequestBody(body) {
-  const missing = REQUIRED_FIELDS.filter((field) => !body[field]);
-  if (missing.length) {
-    return `Missing required fields: ${missing.join(', ')}`;
-  }
-  if (Number.isNaN(Number(body.priceAmount))) {
-    return 'priceAmount must be a valid number';
-  }
-  return null;
-}
+import { uploadImage } from '../services/imagekit.service.js';
 
 export async function createProduct(req, res) {
-  const validationError = validateRequestBody(req.body);
-
-  if (validationError) {
-    return res.status(400).json({ error: validationError });
-  }
-
   if (!req.files?.length) {
     return res.status(400).json({ error: 'At least one product image is required' });
   }
 
   try {
-    const uploads = await Promise.all(
-      req.files.map((file) =>
-        imagekit.upload({
-          file: file.buffer,
-          fileName: file.originalname,
-        })
-      )
+    const { title, description, priceAmount, priceCurrency = 'INR' } = req.body;
+    const seller = req.user?._id || req.body.seller;
+
+    if (!seller) {
+      return res.status(400).json({ error: 'Seller is required' });
+    }
+
+    const price = {
+      amount: Number(priceAmount),
+      currency: priceCurrency,
+    };
+
+    const images = await Promise.all(
+      req.files.map(async (file) => uploadImage(file))
     );
 
-    const images = uploads.map((upload) => ({
-      url: upload.url,
-      thumbnail: upload.thumbnailUrl ?? upload.thumbnail ?? upload.url,
-      id: upload.fileId,
-    }));
-
     const product = await Product.create({
-      title: req.body.title,
-      description: req.body.description,
-      price: {
-        amount: Number(req.body.priceAmount),
-        currency: req.body.priceCurrency || 'INR',
-      },
-      seller: req.body.seller,
+      title,
+      description,
+      price,
+      seller,
       images,
     });
 
