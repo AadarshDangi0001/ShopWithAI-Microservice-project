@@ -149,3 +149,62 @@ export async function updateProduct(req, res) {
     }
 
 }
+
+export async function deleteProduct(req, res) {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'Invalid product id' });
+    }
+
+    try {
+        const requesterId = req.user?._id?.toString() || req.user?.id?.toString();
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    if (product.seller.toString() !== requesterId) {
+      return res.status(403).json({ error: 'Forbidden: you cannot delete this product' });
+    }
+
+    await Product.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      message: 'Product deleted successfully',
+    });
+
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return res.status(500).json({ error: 'Failed to delete product' });
+    }
+
+}
+
+export async function getProductsBySeller(req, res) {
+    try {
+    const sellerId = req.user?._id?.toString() || req.user?.id?.toString();
+
+    const { skip = 0, limit = 20 } = req.query;
+
+    const normalizedSkip = Math.max(Number(skip) || 0, 0);
+    const normalizedLimit = Math.min(Math.max(Number(limit) || 20, 1), 50);
+
+    const products = await Product.find({ seller: sellerId })
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(normalizedSkip)
+      .limit(normalizedLimit);
+
+        return res.status(200).json({
+            message: 'Products fetched successfully',
+            data: products,
+        });
+
+       
+    } catch (error) {
+        console.error('Error fetching products by seller:', error);
+        return res.status(500).json({ error: 'Failed to fetch products' });
+    }
+}

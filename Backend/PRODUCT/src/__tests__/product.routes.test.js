@@ -259,3 +259,111 @@ describe('PATCH /api/products/:id (seller)', () => {
     expect(res.body.error).toMatch(/not found/i);
   });
 });
+
+describe('DELETE /api/products/:id (seller)', () => {
+  const deleteProduct = ({ id, userId, role = 'seller' }) =>
+    request(app)
+      .delete(`/api/products/${id}`)
+      .set('x-test-user-id', userId)
+      .set('x-test-user-role', role);
+
+  it('allows the owning seller to delete their product', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+    const [product] = await seedProducts([
+      { title: 'Disposable Product', seller: sellerId },
+    ]);
+
+    const res = await deleteProduct({ id: product._id, userId: sellerId }).expect(200);
+
+    expect(res.body.message).toMatch(/deleted/i);
+
+    const stored = await Product.findById(product._id);
+    expect(stored).toBeNull();
+  });
+
+  it('rejects sellers trying to delete products they do not own', async () => {
+    const ownerId = new mongoose.Types.ObjectId().toString();
+    const intruderId = new mongoose.Types.ObjectId().toString();
+    const [product] = await seedProducts([
+      { title: 'Unauthorized Delete Product', seller: ownerId },
+    ]);
+
+    const res = await deleteProduct({ id: product._id, userId: intruderId }).expect(403);
+
+    expect(res.body.error).toMatch(/forbidden/i);
+    expect(await Product.countDocuments()).toBe(1);
+  });
+
+  it('blocks non-seller roles from deleting products', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+    const [product] = await seedProducts([
+      { title: 'Role Restricted Product', seller: sellerId },
+    ]);
+
+    const res = await deleteProduct({
+      id: product._id,
+      userId: sellerId,
+      role: 'user',
+    }).expect(403);
+
+    expect(res.body.error).toMatch(/insufficient|forbidden/i);
+    expect(await Product.countDocuments()).toBe(1);
+  });
+
+  it('returns 404 when deleting a non-existent product', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+    const missingId = new mongoose.Types.ObjectId().toString();
+
+    const res = await deleteProduct({ id: missingId, userId: sellerId }).expect(404);
+
+    expect(res.body.error).toMatch(/not found/i);
+  });
+
+  it('returns 400 for invalid product id', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+
+    const res = await deleteProduct({ id: 'not-a-valid-id', userId: sellerId }).expect(400);
+
+    expect(res.body.error).toMatch(/invalid/i);
+  });
+});
+
+describe('GET /api/products/seller (seller)', () => {
+  const getSellerProducts = ({ userId, role = 'seller' }) =>
+    request(app)
+      .get('/api/products/seller')
+      .set('x-test-user-id', userId)
+      .set('x-test-user-role', role);
+
+  it('returns products owned by the authenticated seller', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+    await seedProducts([
+      { title: 'Seller Product One', seller: sellerId },
+      { title: 'Seller Product Two', seller: sellerId },
+      { title: 'Other Seller Product', seller: new mongoose.Types.ObjectId().toString() },
+    ]);
+
+    const res = await getSellerProducts({ userId: sellerId }).expect(200);
+
+    expect(res.body.message).toMatch(/products fetched/i);
+    expect(res.body.data).toHaveLength(2);
+    const titles = res.body.data.map(product => product.title);
+    expect(titles).toEqual(expect.arrayContaining(['Seller Product One', 'Seller Product Two']));
+  });
+
+  it('returns an empty array when seller has no products', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+
+    const res = await getSellerProducts({ userId: sellerId }).expect(200);
+
+    expect(res.body.data).toEqual([]);
+  });
+
+  it('rejects requests from non-seller roles', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+
+    const res = await getSellerProducts({ userId: sellerId, role: 'user' }).expect(403);
+
+    expect(res.body.error).toMatch(/insufficient|forbidden/i);
+  });
+});
