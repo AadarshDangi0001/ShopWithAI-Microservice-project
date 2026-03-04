@@ -4,12 +4,21 @@ import jwt from "jsonwebtoken"
 
 
 export function createAuthMiddleware(roles=["user"]) {
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
     return function authMiddleware(req, res, next) {
         if (process.env.NODE_ENV === 'test') {
+            const roleFromHeader = req.headers['x-test-user-role'] || allowedRoles[0];
             req.user = {
                 _id: req.headers['x-test-user-id'] || 'test-user-id',
-                role: req.headers['x-test-user-role'] || roles[0],
+                id: req.headers['x-test-user-id'] || 'test-user-id',
+                role: roleFromHeader,
             };
+
+            if (!allowedRoles.includes(roleFromHeader)) {
+                return res.status(403).json({ error: 'Forbidden: insufficient permissions' });
+            }
+
             return next();
         }
 
@@ -21,7 +30,7 @@ export function createAuthMiddleware(roles=["user"]) {
 
         try{
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            if (!roles.includes(decoded.role)) {
+            if (!allowedRoles.includes(decoded.role)) {
                 return res.status(403).json({ error: 'Forbidden: insufficient permissions' });
             }
             req.user = decoded;

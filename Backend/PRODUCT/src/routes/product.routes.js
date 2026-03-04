@@ -1,6 +1,6 @@
 import express from 'express';
 import upload from '../middlewares/upload.middleware.js';
-import { createProduct, getProducts } from '../controllers/product.controller.js';
+import { createProduct, getProducts, getProductById, updateProduct } from '../controllers/product.controller.js';
 import { createAuthMiddleware } from '../middlewares/auth.middleware.js';
 import { createProductValidator } from '../middlewares/validator.middleware.js';
 
@@ -16,5 +16,10 @@ router.post(
 );
 
 router.get('/', getProducts);
+
+router.get('/:id', getProductById);
+
+router.patch('/:id', createAuthMiddleware(['seller']), updateProduct);
+
 
 export default router;
