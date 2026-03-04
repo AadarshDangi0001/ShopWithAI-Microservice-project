@@ -1,12 +1,11 @@
 import express from 'express';
 import upload from '../middlewares/upload.middleware.js';
-import { createProduct, listProducts } from '../controllers/product.controller.js';
+import { createProduct, getProducts } from '../controllers/product.controller.js';
 import { createAuthMiddleware } from '../middlewares/auth.middleware.js';
 import { createProductValidator } from '../middlewares/validator.middleware.js';
 
 const router = express.Router();
 
-router.get('/', listProducts);
 
 router.post(
     '/',
@@ -15,5 +14,7 @@ router.post(
     createProductValidator,
     createProduct,
 );
+
+router.get('/', getProducts);
 
 export default router;

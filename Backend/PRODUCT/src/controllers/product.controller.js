@@ -39,12 +39,24 @@ export async function createProduct(req, res) {
   }
 }
 
-export async function listProducts(_req, res) {
-  try {
-    const products = await Product.find().sort({ createdAt: -1 });
-    return res.status(200).json({ products });
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return res.status(500).json({ error: 'Failed to fetch products' });
-  }
+export async function getProducts(req, res) {
+      const {q, minprice,maxprice,skip=0,limit=20} = req.query;
+      
+      const filer = {};
+      if(q){
+          filer.$text = {$search:q}
+      }
+
+      if(minprice || maxprice){
+          filer['price.amount'] = {};
+          if(minprice) filer['price.amount'].$gte = Number(minprice);
+          if(maxprice) filer['price.amount'].$lte = Number(maxprice);
+      }
+
+      const products = await Product.find(filer).skip(Number(skip)).limit(Math.mic(Number(limit),20));
+
+      return res.status(200).json({
+          message:'Products fetched successfully',
+          data:products
+      });
 }

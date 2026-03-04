@@ -44,7 +44,7 @@ const createRequest = (overrides = {}) => {
   return { req, sellerId };
 };
 
-describe('/api/products', () => {
+describe('POST /api/products', () => {
   it('creates a product with uploaded images', async () => {
     const { req, sellerId } = createRequest();
 
@@ -75,18 +75,72 @@ describe('/api/products', () => {
 
     await req.expect(400);
   });
+});
 
-  it('lists products in reverse chronological order', async () => {
-    const first = createRequest();
-    await first.req.attach('images', Buffer.from('image-one'), 'one.jpg').expect(201);
+describe('GET /api/products', () => {
+  const baseSeller = new mongoose.Types.ObjectId();
 
-    const second = createRequest({ title: 'Second Product' });
-    await second.req.attach('images', Buffer.from('image-two'), 'two.jpg').expect(201);
+  const createProducts = async products => {
+    return Product.create(
+      products.map(product => ({
+        title: `Product ${Math.random().toString(36).slice(2)}`,
+        description: 'Test description',
+        price: { amount: 999, currency: 'INR' },
+        seller: baseSeller,
+        images: [],
+        ...product,
+        price: {
+          amount: product?.price?.amount ?? product?.priceAmount ?? 999,
+          currency: product?.price?.currency ?? product?.priceCurrency ?? 'INR',
+        },
+        seller: product?.seller || baseSeller,
+      })),
+    );
+  };
+
+  it('returns products with default pagination', async () => {
+    await createProducts([
+      { title: 'Budget Phone', price: { amount: 999, currency: 'INR' } },
+      { title: 'Gaming Laptop', price: { amount: 4999, currency: 'INR' } },
+    ]);
 
     const res = await request(app).get('/api/products').expect(200);
 
-    expect(Array.isArray(res.body.products)).toBe(true);
-    expect(res.body.products.length).toBe(2);
-    expect(res.body.products[0].title).toBe('Second Product');
+    expect(res.body.message).toBe('Products fetched successfully');
+    expect(res.body.data).toHaveLength(2);
+    const titles = res.body.data.map(product => product.title);
+    expect(titles).toEqual(expect.arrayContaining(['Budget Phone', 'Gaming Laptop']));
+  });
+
+  it('filters products by price range', async () => {
+    await createProducts([
+      { title: 'Budget Phone', price: { amount: 999 } },
+      { title: 'Midrange Phone', price: { amount: 1999 } },
+      { title: 'Premium Phone', price: { amount: 4999 } },
+    ]);
+
+    const res = await request(app)
+      .get('/api/products')
+      .query({ minprice: 1500, maxprice: 2500 })
+      .expect(200);
+
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].title).toBe('Midrange Phone');
+  });
+
+  it('applies skip and limit parameters', async () => {
+    await createProducts([
+      { title: 'First Product' },
+      { title: 'Second Product' },
+      { title: 'Third Product' },
+    ]);
+
+    const res = await request(app)
+      .get('/api/products')
+      .query({ skip: 1, limit: 1 })
+      .expect(200);
+
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].title).toBe('Second Product');
   });
 });
