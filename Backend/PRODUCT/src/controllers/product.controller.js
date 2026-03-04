@@ -8,7 +8,7 @@ export async function createProduct(req, res) {
 
   try {
     const { title, description, priceAmount, priceCurrency = 'INR' } = req.body;
-    const seller = req.user?._id || req.body.seller;
+    const seller = req.user?._id || req.user?.id || req.body.seller;
 
     if (!seller) {
       return res.status(400).json({ error: 'Seller is required' });
@@ -19,9 +19,7 @@ export async function createProduct(req, res) {
       currency: priceCurrency,
     };
 
-    const images = await Promise.all(
-      req.files.map(async (file) => uploadImage(file))
-    );
+    const images = await Promise.all((req.files || []).map(file => uploadImage(file.buffer, file.originalname)));
 
     const product = await Product.create({
       title,

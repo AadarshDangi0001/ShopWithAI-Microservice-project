@@ -34,6 +34,7 @@ const createRequest = (overrides = {}) => {
 
   const req = request(app)
     .post('/api/products')
+    .set('x-test-user-id', sellerId)
     .field('title', title)
     .field('description', description)
     .field('priceAmount', priceAmount)

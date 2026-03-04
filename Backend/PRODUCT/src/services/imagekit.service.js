@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import ImageKit from '@imagekit/nodejs';
+import ImageKit from 'imagekit';
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
@@ -10,12 +10,12 @@ const imagekit = new ImageKit({
     urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
 });
 
-export async function uploadImage(file) {
+export async function uploadImage(buffer, filename, folder = '/products') {
     try {
         const result = await imagekit.upload({
-            file: file.buffer,
-            fileName: `${uuidv4()}-${file.originalname}`,
-            folder: '/products'
+            file: buffer,
+            fileName: uuidv4(),
+            folder,
         });
         return{
             url: result.url,
