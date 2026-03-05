@@ -23,25 +23,25 @@ const buildItemPayload = overrides => ({
 
 const addItem = async ({ userId, payload }) => {
   return request(app)
-    .post('/cart/items')
+    .post('/api/cart/items')
     .set('x-test-user-id', userId)
     .send(payload ?? buildItemPayload());
 };
 
 const patchItem = ({ userId, productId, quantity }) =>
   request(app)
-    .patch(`/cart/items/${productId}`)
+    .patch(`/api/cart/items/${productId}`)
     .set('x-test-user-id', userId)
     .send({ quantity });
 
 const removeItem = ({ userId, productId }) =>
   request(app)
-    .delete(`/cart/items/${productId}`)
+    .delete(`/api/cart/items/${productId}`)
     .set('x-test-user-id', userId);
 
-const getCart = userId => request(app).get('/cart').set('x-test-user-id', userId);
+const getCart = userId => request(app).get('/api/cart').set('x-test-user-id', userId);
 
-const clearCart = userId => request(app).delete('/cart').set('x-test-user-id', userId);
+const clearCart = userId => request(app).delete('/api/cart').set('x-test-user-id', userId);
 
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
@@ -64,7 +64,7 @@ afterEach(async () => {
   await Promise.all(collections.map(collection => collection.deleteMany({})));
 });
 
-describe('POST /cart/items', () => {
+describe('POST /api/cart/items', () => {
   it('creates a cart for the user when the first item is added', async () => {
     const userId = buildUserId();
     const payload = buildItemPayload({ quantity: 2, price: { amount: 2499, currency: 'INR' } });
@@ -110,7 +110,7 @@ describe('POST /cart/items', () => {
   });
 });
 
-describe('GET /cart', () => {
+describe('GET /api/cart', () => {
   it('returns an empty cart for first-time shoppers', async () => {
     const userId = buildUserId();
 
@@ -142,9 +142,42 @@ describe('GET /cart', () => {
     );
     expect(res.body.cart.subtotal.amount).toBe(1299 * 3);
   });
+
+  it('returns the latest list of items alongside accurate cart totals', async () => {
+    const userId = buildUserId();
+    const firstItem = buildItemPayload({ quantity: 2, price: { amount: 999, currency: 'INR' } });
+    const secondItem = buildItemPayload({ quantity: 1, price: { amount: 1499, currency: 'INR' } });
+
+    await addItem({ userId, payload: firstItem }).expect(201);
+    await addItem({ userId, payload: secondItem }).expect(201);
+
+    const res = await getCart(userId).expect(200);
+
+    expect(res.body.message).toMatch(/fetched/i);
+    expect(res.body.cart.items).toHaveLength(2);
+    expect(res.body.cart.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          productId: firstItem.productId,
+          quantity: firstItem.quantity,
+          price: expect.objectContaining({ amount: firstItem.price.amount }),
+        }),
+        expect.objectContaining({
+          productId: secondItem.productId,
+          quantity: secondItem.quantity,
+          price: expect.objectContaining({ amount: secondItem.price.amount }),
+        }),
+      ]),
+    );
+    const expectedTotal =
+      firstItem.price.amount * firstItem.quantity + secondItem.price.amount * secondItem.quantity;
+    expect(res.body.cart.subtotal).toEqual(
+      expect.objectContaining({ amount: expectedTotal, currency: 'INR' }),
+    );
+  });
 });
 
-describe('PATCH /cart/items/:productId', () => {
+describe('PATCH /api/cart/items/:productId', () => {
   it('updates the quantity for a given product and recalculates the subtotal', async () => {
     const userId = buildUserId();
     const payload = buildItemPayload({ quantity: 1 });
@@ -171,7 +204,7 @@ describe('PATCH /cart/items/:productId', () => {
   });
 });
 
-describe('DELETE /cart/items/:productId', () => {
+describe('DELETE /api/cart/items/:productId', () => {
   it('removes the requested product while keeping the remaining entries intact', async () => {
     const userId = buildUserId();
     const firstItem = buildItemPayload({ title: 'Bluetooth Speaker' });
@@ -196,7 +229,7 @@ describe('DELETE /cart/items/:productId', () => {
   });
 });
 
-describe('DELETE /cart', () => {
+describe('DELETE /api/cart', () => {
   it('clears the entire cart and returns an empty payload', async () => {
     const userId = buildUserId();
     await addItem({ userId, payload: buildItemPayload({ quantity: 2 }) }).expect(201);

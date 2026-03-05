@@ -1,4 +1,4 @@
-import {body, validationResult} from "express-validator";
+import {body, param, validationResult} from "express-validator";
 import mongoose from "mongoose";
 
 
@@ -22,3 +22,17 @@ export const validateAddItemToCart = [
     
 validationMiddleware,
 ];  
+
+export const validateUpdateItemQuantity = [
+    param('productId')
+    .isString()
+    .withMessage('Product ID must be a string')
+    .custom(value => mongoose.Types.ObjectId.isValid(value))
+    .withMessage('Invalid Product ID format'),
+    body('qty')
+    .isInt({ gt: 0 })
+    .withMessage('Quantity must be an integer greater than 0'),
+    
+validationMiddleware,
+] ;
+

@@ -27,3 +27,51 @@ export const addItemToCart = async (req, res) => {
    res.status(201).json({ message: 'Item added to cart successfully', cart });
 
 }
+
+export const updateItemQuanity = async (req, res) => {
+   const { productId } = req.params;
+   const { qty } = req.body;
+   const user = req.user;
+   
+   let cart = await cartModel.findOne({ user: user._id });
+
+   if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+   }
+   
+   const existingItemIndex = cart.item.findIndex((item) => item.productId === productId); 
+
+   if (existingItemIndex === -1) {
+      return res.status(404).json({ message: 'Item not found in cart' });
+   }
+
+   cart.item[existingItemIndex].quantity = qty;
+   await cart.save();
+
+   res.status(200).json({ message: 'Item quantity updated successfully', cart });
+}
+
+
+export const getCart = async (req, res) => {
+   const user = req.user;
+
+   let cart = await cartModel.findOne({ user: user._id });
+
+   if (!cart) {
+       cart = new cartModel({
+           user: user._id,
+           items: [],
+       });
+       await cart.save();
+   }
+
+   res.status(200).json({ 
+      message: 'Cart fetched successfully', 
+      cart,
+      totals:{
+         itemCount:cart.items.length,
+         totalQuantity: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+      }
+   });
+
+}
