@@ -1,4 +1,4 @@
-import { cartModel } from "../models/car.model";
+import { cartModel } from "../models/car.model.js";
 
 
 export const addItemToCart = async (req, res) => {
@@ -74,4 +74,36 @@ export const getCart = async (req, res) => {
       }
    });
 
+}
+
+
+export const deleteItemFromCart = async (req, res) => {
+   const { productId } = req.params;
+   const user = req.user;
+
+   let cart = await cartModel.findOne({ user: user._id });
+
+   if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+   }
+
+   cart.item = cart.item.filter((item) => item.productId !== productId);
+   await cart.save();
+
+   res.status(200).json({ message: 'Item removed from cart successfully', cart });
+}
+
+export const clearCart = async (req, res) => {
+   const user = req.user;
+
+   let cart = await cartModel.findOne({ user: user._id });
+
+   if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+   }
+
+   cart.item = [];
+   await cart.save();
+
+   res.status(200).json({ message: 'Cart cleared successfully', cart });
 }

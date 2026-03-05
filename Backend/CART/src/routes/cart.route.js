@@ -1,8 +1,8 @@
 
 import express from 'express';
-import createAuthMiddleware from '../middlewares/auth.middleware';
-import { addItemToCart, getCart } from '../controllers/cart.controller';
-import { validateAddItemToCart, validateUpdateItemQuantity } from '../middlewares/validation.middleware';
+import createAuthMiddleware from '../middlewares/auth.middleware.js';
+import { addItemToCart, clearCart, deleteItemFromCart, getCart, updateItemQuanity } from '../controllers/cart.controller.js';
+import { validateAddItemToCart, validateUpdateItemQuantity } from '../middlewares/validation.middleware.js';
 
 
 
@@ -31,11 +31,13 @@ router.patch(
  );
 router.delete(
     '/items/:productId', 
-    createAuthMiddleware(), 
+    createAuthMiddleware(['user']), 
+    deleteItemFromCart
 );
 router.delete(
     '/', 
-    createAuthMiddleware(), 
+    createAuthMiddleware(['user']), 
+    clearCart
 );
 
 
