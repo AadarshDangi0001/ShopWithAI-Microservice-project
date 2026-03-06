@@ -1,5 +1,32 @@
-import mongoose, { Cursor } from "mongoose";
+import mongoose from "mongoose";
 
+
+const addressSchema = new mongoose.Schema({ 
+    street: {
+        type: String,
+       
+    },
+    city: {
+        type: String,
+      
+    },
+    state: {
+        type: String,
+       
+    },
+    zip: {
+        type: String,
+       
+    },
+    country: {
+        type: String,
+        
+    },
+    isDefault: {
+        type: Boolean,
+        default: false
+    }
+})  
 
 const orderSchema = new mongoose.Schema({
     user:{
@@ -47,10 +74,7 @@ const orderSchema = new mongoose.Schema({
             enum: ['USD',  'INR']
         }
     },
-    shippingAddress:{
-        type: String,
-        required: true
-    },
+    shippingAddress: addressSchema,
     createdAt:{
         type: Date,
         default: Date.now
@@ -58,3 +82,8 @@ const orderSchema = new mongoose.Schema({
 },{
     timestamps: true
 })
+
+
+const orderModel = mongoose.model('order', orderSchema);
+
+export default orderModel;

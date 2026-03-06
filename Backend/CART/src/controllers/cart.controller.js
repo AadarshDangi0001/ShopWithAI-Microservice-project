@@ -1,15 +1,22 @@
 import { cartModel } from "../models/car.model.js";
 
+const getUserId = (user) => user?._id || user?.id;
+
 
 export const addItemToCart = async (req, res) => {
    const { productId, qty } = req.body;
    const user = req.user;
+   const userId = getUserId(user);
 
-   let cart = await cartModel.findOne({ user: user._id });
+   if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+   }
+
+   let cart = await cartModel.findOne({ user: userId });
 
    if (!cart) {
       cart = new cartModel({
-         user: user._id,
+         user: userId,
          item: [{ productId, quantity: qty }],
       });
    } else {
@@ -32,8 +39,13 @@ export const updateItemQuanity = async (req, res) => {
    const { productId } = req.params;
    const { qty } = req.body;
    const user = req.user;
+   const userId = getUserId(user);
+
+   if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+   }
    
-   let cart = await cartModel.findOne({ user: user._id });
+   let cart = await cartModel.findOne({ user: userId });
 
    if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
@@ -54,23 +66,35 @@ export const updateItemQuanity = async (req, res) => {
 
 export const getCart = async (req, res) => {
    const user = req.user;
+   const userId = getUserId(user);
 
-   let cart = await cartModel.findOne({ user: user._id });
+   if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+   }
+
+   let cart = await cartModel.findOne({ user: userId });
 
    if (!cart) {
        cart = new cartModel({
-           user: user._id,
-           items: [],
+           user: userId,
+            items: [],
        });
+
+         if (!Array.isArray(cart.item)) {
+            cart.item = [];
+         }
+
        await cart.save();
    }
+
+   const items = cart.item || [];
 
    res.status(200).json({ 
       message: 'Cart fetched successfully', 
       cart,
       totals:{
-         itemCount:cart.items.length,
-         totalQuantity: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+         itemCount: items.length,
+         totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
       }
    });
 
@@ -80,8 +104,13 @@ export const getCart = async (req, res) => {
 export const deleteItemFromCart = async (req, res) => {
    const { productId } = req.params;
    const user = req.user;
+   const userId = getUserId(user);
 
-   let cart = await cartModel.findOne({ user: user._id });
+   if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+   }
+
+   let cart = await cartModel.findOne({ user: userId });
 
    if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
@@ -95,8 +124,13 @@ export const deleteItemFromCart = async (req, res) => {
 
 export const clearCart = async (req, res) => {
    const user = req.user;
+   const userId = getUserId(user);
 
-   let cart = await cartModel.findOne({ user: user._id });
+   if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+   }
+
+   let cart = await cartModel.findOne({ user: userId });
 
    if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });

@@ -29,10 +29,10 @@ seller: {
 //     type: String, 
 //     required: true 
 // },
-//   stockQuantity: { 
-//     type: Number, 
-//     required: true 
-// },
+  stock: { 
+    type: Number, 
+    default: 0
+},
   images: [{ 
     url: String,
     thumbnail: String,
