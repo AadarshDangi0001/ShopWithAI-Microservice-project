@@ -14,6 +14,59 @@ const createOrderValidator = [
     .withMessage('shippingAddress must be an object'),
 
     body('shippingAddress.street')
+    .exists({ checkFalsy: true })
+    .withMessage('Street is required')
+    .isString()
+    .withMessage('Street must be a string')
+    .notEmpty()
+    .withMessage('Street is required'),
+
+    body('shippingAddress.city')
+    .exists({ checkFalsy: true })
+    .withMessage('City is required')
+    .isString()
+    .withMessage('City must be a string')
+    .notEmpty()
+    .withMessage('City is required'),
+
+    body('shippingAddress.state')
+    .exists({ checkFalsy: true })
+    .withMessage('State is required')
+    .isString()
+    .withMessage('State must be a string')
+    .notEmpty()
+    .withMessage('State is required'),
+
+    body('shippingAddress')
+    .custom((value) => {
+        const pinCode = value?.pinCode ?? value?.pincode;
+
+        if (typeof pinCode !== 'string' || pinCode.trim() === '') {
+            throw new Error('Pin code is required');
+        }
+
+        return true;
+    }),
+
+    body('shippingAddress.country')
+    .exists({ checkFalsy: true })
+    .withMessage('Country is required')
+    .isString()
+    .withMessage('Country must be a string')
+    .notEmpty()
+    .withMessage('Country is required'),
+
+    
+
+    respondWithValidationErrors
+]
+
+const updateAddressValidator = [
+    body('shippingAddress')
+    .isObject()
+    .withMessage('shippingAddress must be an object'),
+
+    body('shippingAddress.street')
     .isString()
     .withMessage('Street must be a string')
     .notEmpty()
@@ -42,16 +95,13 @@ const createOrderValidator = [
         return true;
     }),
 
+
     body('shippingAddress.country')
     .isString()
     .withMessage('Country must be a string')
     .notEmpty()
     .withMessage('Country is required'),
 
-    
-
     respondWithValidationErrors
 ]
-
-
-export  { createOrderValidator };
+export  { createOrderValidator , updateAddressValidator };
