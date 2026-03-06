@@ -8,14 +8,27 @@ export function createAuthMiddleware(roles=["user"]) {
 
     return function authMiddleware(req, res, next) {
         if (process.env.NODE_ENV === 'test') {
-            const roleFromHeader = req.headers['x-test-user-role'] || allowedRoles[0];
+            const userIdFromHeader = req.headers['x-test-user-id'];
+            const roleFromHeader = req.headers['x-test-user-role'];
+            const userIdFromCookie = req.cookies?.userId;
+            const roleFromCookie = req.cookies?.role;
+            const tokenFromCookie = req.cookies?.token;
+
+            const userId = userIdFromHeader || userIdFromCookie;
+            const role = roleFromHeader || roleFromCookie || allowedRoles[0];
+
+            // In test mode, require either legacy x-test headers or a token cookie.
+            if (!userId || (!userIdFromHeader && !tokenFromCookie)) {
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+
             req.user = {
-                _id: req.headers['x-test-user-id'] || 'test-user-id',
-                id: req.headers['x-test-user-id'] || 'test-user-id',
-                role: roleFromHeader,
+                _id: userId,
+                id: userId,
+                role,
             };
 
-            if (!allowedRoles.includes(roleFromHeader)) {
+            if (!allowedRoles.includes(role)) {
                 return res.status(403).json({ error: 'Forbidden: insufficient permissions' });
             }
 

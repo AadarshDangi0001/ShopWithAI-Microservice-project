@@ -1,4 +1,4 @@
-import { cartModel } from "../models/car.model.js";
+import { cartModel } from "../models/cart.model.js";
 
 const getUserId = (user) => user?._id || user?.id;
 

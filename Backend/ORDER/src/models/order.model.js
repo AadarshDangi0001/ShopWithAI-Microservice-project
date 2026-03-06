@@ -14,17 +14,13 @@ const addressSchema = new mongoose.Schema({
         type: String,
        
     },
-    zip: {
+    pincode: {
         type: String,
        
     },
     country: {
         type: String,
         
-    },
-    isDefault: {
-        type: Boolean,
-        default: false
     }
 })  
 
@@ -74,7 +70,11 @@ const orderSchema = new mongoose.Schema({
             enum: ['USD',  'INR']
         }
     },
-    shippingAddress: addressSchema,
+    shippingAddress: {
+        type:addressSchema,
+        required: true
+
+    },
     createdAt:{
         type: Date,
         default: Date.now
