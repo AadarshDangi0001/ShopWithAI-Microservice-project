@@ -2,46 +2,50 @@ import {tool} from 'langchain/core/tools';
 import { z } from 'zod';
 import axios from 'axios';
 
-const searchProject = tool(async({query, token})=>{
+const searchProduct = tool(async ({ query, token }) => {
 
-   const response = await axios.get(`http://localhost:3001/api/projects?q=${data.query}`,{
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-   });
+    console.log("searchProduct called with data:", { query, token })
 
-   return JSON.stringify(response.data);
-
-}
-,{
-    
-    name:"searchProject",
-    description:"Search for a project by name or description",
-    inputSchema: z.object({
-        query: z.string().describe("The search query for the project")
+    const response = await axios.get(`http://nova-alb-551701734.ap-northeast-3.elb.amazonaws.com/api/products?q=${query}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     })
 
+    return JSON.stringify(response.data)
+
+}, {
+
+    name: "searchProduct",
+    description: "Search for products based on a query",
+    schema: z.object({
+        query: z.string().describe("The search query for products")
+    })
 })
 
-const addProductToCart = tool(async({ productId, qty = 1,token})=>{
 
-    const response = await axios.post(`http://localhost:3002/api/cart`,{
+const addProductToCart = tool(async ({ productId, qty = 1, token }) => {
+
+
+    const response = await axios.post(`http://nova-alb-551701734.ap-northeast-3.elb.amazonaws.com/api/cart/items`, {
         productId,
         qty
-    },{
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-
-    return JSON.stringify(response.data);
-
-}
-,{
-    
-    name:"addProductToCart",
-    description:"Add a product to the cart by product ID",
-    inputSchema: z.object({
-        productId: z.string().describe("The ID of the product to add to the cart"),
-        qty: z.number().describe("The quantity of the product to add to the cart").default(1)
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     })
 
+    return `Added product with id ${productId} (qty: ${qty}) to cart`
+
+
+}, {
+    name: "addProductToCart",
+    description: "Add a product to the shopping cart",
+    schema: z.object({
+        productId: z.string().describe("The id of the product to add to the cart"),
+        qty: z.number().describe("The quantity of the product to add to the cart").default(1),
+    })
 })
 
 export {searchProject,addProductToCart};
