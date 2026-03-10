@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "amqplib": "^0.10.9",
     "axios": "^1.13.6",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",

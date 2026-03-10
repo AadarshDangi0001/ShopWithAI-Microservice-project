@@ -5,6 +5,8 @@ import axios from "axios";
 import paymentModel from "../models/payment.model.js";
 import { validatePaymentVerification } from "razorpay/dist/utils/razorpay-utils.js";
 
+import { publishToQueue } from "../broker.js/borker.js";
+
 import Razorpay from "razorpay";
 
 const razorpay = new Razorpay({
@@ -83,12 +85,29 @@ export const verifyPayment = async (req, res) => {
 
         await payment.save();
 
+        await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_VERIFIED", {
+            orderId: payment.order,
+            paymentId: payment.paymentId,
+            userId: payment.user,
+            amount: payment.price.amount,
+            currency: payment.price.currency,
+            fullName: req.user.fullName,
+        });
+
         res.status(200).json({ message: "Payment verified successfully" });
        
         
     } catch (err) {
         
          console.log(err);
+         
+         await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_FAILED", {
+             email: req.user.email,
+             paymentId: paymentId,
+             orderId: razorpayOrderId
+           
+        });
+         
         return res.status(500).json({ message: 'Internal Server Error' });
 
     }
