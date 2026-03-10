@@ -1,4 +1,4 @@
-# ShopWithAI E-commerce Microservices
+# ShopWithAI E-commerce Microservices 
 
 AI-enabled ecommerce backend built with Node.js, Express, MongoDB, and service-to-service communication. The project is split into independent backend services for authentication, product catalog, cart, order, payment, and an AI buddy (socket-based assistant).
 
