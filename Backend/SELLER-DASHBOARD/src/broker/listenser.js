@@ -1,10 +1,10 @@
-const { subscribeToQueue } = require("./broker")
-const userModel = require("../models/user.model")
-const productModel = require("../models/product.model")
-const orderModel = require("../models/order.model")
-const paymentModel = require("../models/payment.model")
+import { subscribeToQueue } from "./broker.js"
+import userModel from "../models/user.model.js"
+import productModel from "../models/product.model.js"
+import orderModel from "../models/order.model.js"
+import paymentModel from "../models/payment.model.js"
 
-module.exports = async function () {
+export default async function () {
     subscribeToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", async (user) => {
         await userModel.create(user)
     })
@@ -24,4 +24,4 @@ module.exports = async function () {
     subscribeToQueue("PAYMENT_SELLER_DASHBOARD.PAYMENT_UPDATE", async (payment) => {
         await paymentModel.findOneAndUpdate({ orderId: payment.orderId }, { ...payment })
     })
-} 
+}

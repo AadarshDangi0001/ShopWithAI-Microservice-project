@@ -109,6 +109,8 @@ export const createOrder = async (req, res) => {
             },
             shippingAddress: normalizedShippingAddress,
         });
+         
+         await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order)
 
         return res.status(201).json({
             message: "Order created successfully",
