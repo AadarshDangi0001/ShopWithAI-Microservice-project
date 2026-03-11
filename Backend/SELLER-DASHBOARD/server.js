@@ -8,6 +8,10 @@ const PORT = process.env.PORT || 3007;
 
 connectDB();
 
+connect().then(() => {
+    listener();
+})
+
 app.listen(PORT, () => {
     console.log(`Seller service is running on port ${PORT}`);
 });
