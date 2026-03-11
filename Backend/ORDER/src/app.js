@@ -9,6 +9,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'Order Service is running.' });
+});
+
+
 app.use("/api/orders", orderRouter);
 
 
