@@ -5,7 +5,7 @@ import axios from "axios";
 import paymentModel from "../models/payment.model.js";
 import { validatePaymentVerification } from "razorpay/dist/utils/razorpay-utils.js";
 
-import { publishToQueue } from "../broker.js/borker.js";
+import { publishToQueue } from "../broker/borker.js";
 
 import Razorpay from "razorpay";
 

@@ -2,7 +2,7 @@ import userModel from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import redis from "../db/redis.js";
-import { publishToQueue } from "../broker.js/borker.js";
+import { publishToQueue } from "../broker/borker.js";
 
 async function registerUser(req, res) {
     const { username, email, password, fullName   = {} ,role} = req.body;
