@@ -30,14 +30,17 @@ async function registerUser(req, res) {
             role: role || 'user'
 
         });
+await Promise.all([
+            publishToQueue('AUTH_NOTIFICATION.USER_CREATED', {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                fullName: user.fullName,
+            }),
+            publishToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", user)
+        ]);
 
-        await publishToQueue("AUTH_NOTIFICATION.USER_CREATED", {
-            id: newUser._id,
-            username: newUser.username,
-            email: newUser.email,
-            fullName: newUser.fullName,
-           
-        });
+
 
         const token = jwt.sign({
             id: newUser._id,
