@@ -6,12 +6,14 @@ AI-enabled ecommerce backend built with Node.js, Express, MongoDB, and service-t
 
 ```text
 Backend/
-	AUTH/      -> user auth, profile, addresses, JWT cookie
-	PRODUCT/   -> product CRUD, seller routes, image upload (ImageKit)
-	CART/      -> cart management
-	ORDER/     -> order creation from cart + product checks
-	PAYMENT/   -> Razorpay order creation and verification
-	AI-BUDDY/  -> socket.io + LangChain agent tools for shopping assistant
+	AUTH/              -> user auth, profile, addresses, JWT cookie
+	PRODUCT/           -> product CRUD, seller routes, image upload (ImageKit)
+	CART/              -> cart management
+	ORDER/             -> order creation from cart + product checks
+	PAYMENT/           -> Razorpay order creation and verification
+	NOTIFICATION/      -> email notifications via message broker
+	SELLER-DASHBOARD/  -> seller metrics, orders, products dashboard
+	AI-BUDDY/          -> socket.io + LangChain agent tools for shopping assistant
 ```
 
 ## Tech Stack
@@ -22,6 +24,7 @@ Backend/
 - Redis (token blacklist in AUTH)
 - Razorpay (PAYMENT)
 - ImageKit + Multer (PRODUCT image upload)
+- RabbitMQ / CloudAMQP (message broker for NOTIFICATION, SELLER-DASHBOARD, and inter-service events)
 - Socket.IO + LangChain + Gemini (AI-BUDDY)
 - Jest + Supertest (service-level tests)
 
@@ -33,6 +36,8 @@ Backend/
 - `ORDER` -> `3003`
 - `PAYMENT` -> `3004`
 - `AI-BUDDY` -> `3005`
+- `NOTIFICATION` -> `3006`
+- `SELLER-DASHBOARD` -> `3007`
 
 ## Prerequisites
 
@@ -42,6 +47,7 @@ Backend/
 - Razorpay account keys (for PAYMENT)
 - ImageKit credentials (for PRODUCT image uploads)
 - Google GenAI API access (for AI-BUDDY)
+- RabbitMQ or CloudAMQP URL (for NOTIFICATION and SELLER-DASHBOARD)
 
 ## Environment Variables
 
@@ -124,6 +130,23 @@ JWT_SECRET=your_jwt_secret
 GOOGLE_API_KEY=your_google_genai_api_key
 ```
 
+### NOTIFICATION (`Backend/NOTIFICATION/.env`)
+
+```env
+PORT=3006
+RABBIT_URL=amqp://127.0.0.1
+```
+
+### SELLER-DASHBOARD (`Backend/SELLER-DASHBOARD/.env`)
+
+```env
+PORT=3007
+MONGO_URI=mongodb://127.0.0.1:27017/shopwithai_seller_dashboard
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
+RABBIT_URL=amqp://127.0.0.1
+```
+
 ## Installation
 
 From repository root:
@@ -135,6 +158,8 @@ cd ../CART && npm install
 cd ../ORDER && npm install
 cd ../PAYMENT && npm install
 cd ../AI-BUDDY && npm install
+cd ../NOTIFICATION && npm install
+cd ../SELLER-DASHBOARD && npm install
 ```
 
 ## Run Services
@@ -148,6 +173,8 @@ cd Backend/CART && npm run dev
 cd Backend/ORDER && npm run dev
 cd Backend/PAYMENT && npm run dev
 cd Backend/AI-BUDDY && npm run dev
+cd Backend/NOTIFICATION && npm run dev
+cd Backend/SELLER-DASHBOARD && npm run dev
 ```
 
 ## API Overview
@@ -160,6 +187,8 @@ Base URLs:
 - ORDER: `http://localhost:3003`
 - PAYMENT: `http://localhost:3004`
 - AI-BUDDY socket path: `http://localhost:3005/api/socket/socket.io/`
+- NOTIFICATION: `http://localhost:3006`
+- SELLER-DASHBOARD: `http://localhost:3007`
 
 ### AUTH
 
@@ -201,6 +230,12 @@ Base URLs:
 - `POST /api/payments/create/:orderId`
 - `POST /api/payments/verify`
 
+### SELLER-DASHBOARD
+
+- `GET /api/seller/dashboard/metrics` (seller)
+- `GET /api/seller/dashboard/orders` (seller)
+- `GET /api/seller/dashboard/products` (seller)
+
 ## Testing
 
 Run tests per service:
@@ -212,7 +247,7 @@ cd Backend/CART && npm test
 cd Backend/ORDER && npm test
 ```
 
-Note: PAYMENT and AI-BUDDY currently do not include test files in this repo structure.
+Note: PAYMENT, AI-BUDDY, NOTIFICATION, and SELLER-DASHBOARD currently do not include test files.
 
 ## Auth Notes
 
@@ -236,6 +271,8 @@ Note: PAYMENT and AI-BUDDY currently do not include test files in this repo stru
 3. `CART`
 4. `ORDER`
 5. `PAYMENT`
-6. `AI-BUDDY`
+6. `NOTIFICATION`
+7. `SELLER-DASHBOARD`
+8. `AI-BUDDY`
 
 This order helps ensure dependent services are available when upstream calls are made.
