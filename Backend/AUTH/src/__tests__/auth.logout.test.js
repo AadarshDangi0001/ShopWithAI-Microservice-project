@@ -66,6 +66,7 @@ describe('/api/auth/logout', () => {
     expect(setCookie).toBeDefined();
     expect(setCookie.some((cookie) => cookie.toLowerCase().startsWith('token=;'))).toBe(true);
   });
+  
 
   it('rejects logout attempts without an auth cookie', async () => {
     const res = await request(app).post('/api/auth/logout').expect(401);
