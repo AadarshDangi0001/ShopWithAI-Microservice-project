@@ -30,23 +30,23 @@ async function registerUser(req, res) {
             role: role || 'user'
 
         });
-await Promise.all([
+        const savedUser = await newUser.save();
+
+        await Promise.all([
             publishToQueue('AUTH_NOTIFICATION.USER_CREATED', {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                fullName: user.fullName,
+                id: savedUser._id,
+                username: savedUser.username,
+                email: savedUser.email,
+                fullName: savedUser.fullName,
             }),
-            publishToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", user)
+            publishToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", savedUser)
         ]);
 
-
-
         const token = jwt.sign({
-            id: newUser._id,
-            username: newUser.username,
-            email: newUser.email,
-            role: newUser.role
+            id: savedUser._id,
+            username: savedUser.username,
+            email: savedUser.email,
+            role: savedUser.role
         }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         res.cookie('token', token, {
@@ -55,8 +55,6 @@ await Promise.all([
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
-
-        const savedUser = await newUser.save();
 
         return res.status(201).json({
             message: 'User registered successfully',
