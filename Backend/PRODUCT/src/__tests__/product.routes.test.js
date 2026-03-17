@@ -258,6 +258,28 @@ describe('PATCH /api/products/:id (seller)', () => {
 
     expect(res.body.error).toMatch(/not found/i);
   });
+
+  it('updates stock for the owning seller', async () => {
+    const sellerId = new mongoose.Types.ObjectId().toString();
+    const [product] = await seedProducts([
+      {
+        title: 'Stock Product',
+        stock: 0,
+        seller: sellerId,
+      },
+    ]);
+
+    const res = await patchProduct({
+      id: product._id,
+      userId: sellerId,
+      body: { stock: 20 },
+    }).expect(200);
+
+    expect(res.body.data.stock).toBe(20);
+
+    const stored = await Product.findById(product._id);
+    expect(stored.stock).toBe(20);
+  });
 });
 
 describe('DELETE /api/products/:id (seller)', () => {

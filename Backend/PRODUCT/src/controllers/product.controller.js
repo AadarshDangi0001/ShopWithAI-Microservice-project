@@ -9,7 +9,7 @@ export async function createProduct(req, res) {
   }
 
   try {
-    const { title, description, priceAmount, priceCurrency = 'INR' } = req.body;
+    const { title, description, priceAmount, priceCurrency = 'INR', stock } = req.body;
     const seller = req.user?._id || req.user?.id || req.body.seller;
 
     if (!seller) {
@@ -21,6 +21,11 @@ export async function createProduct(req, res) {
       currency: priceCurrency,
     };
 
+    const normalizedStock = stock !== undefined ? Number(stock) : 0;
+    if (!Number.isFinite(normalizedStock) || normalizedStock < 0) {
+      return res.status(400).json({ error: 'stock must be a non-negative number' });
+    }
+
     const images = await Promise.all((req.files || []).map(file => uploadImage(file.buffer, file.originalname)));
 
     const product = await Product.create({
@@ -28,6 +33,7 @@ export async function createProduct(req, res) {
       description,
       price,
       seller,
+      stock: normalizedStock,
       images,
     });
 
@@ -126,7 +132,7 @@ export async function updateProduct(req, res) {
       return res.status(403).json({ error: 'Forbidden: you cannot modify this product' });
     }
 
-    const allowedUpdates = ['title', 'description', 'price'];
+    const allowedUpdates = ['title', 'description', 'price', 'stock'];
     for (const key of allowedUpdates) {
       if (!Object.prototype.hasOwnProperty.call(req.body, key)) {
         continue;
@@ -139,6 +145,20 @@ export async function updateProduct(req, res) {
         if (req.body.price.currency) {
           product.price.currency = req.body.price.currency;
         }
+        continue;
+      }
+
+      if (key === 'stock') {
+        if (req.body.stock === '' || req.body.stock === null) {
+          return res.status(400).json({ error: 'stock must be a non-negative number' });
+        }
+
+        const parsedStock = Number(req.body.stock);
+        if (!Number.isFinite(parsedStock) || parsedStock < 0) {
+          return res.status(400).json({ error: 'stock must be a non-negative number' });
+        }
+
+        product.stock = parsedStock;
         continue;
       }
 
