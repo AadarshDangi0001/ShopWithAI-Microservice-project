@@ -1,5 +1,6 @@
+import 'dotenv/config';
 import { StateGraph , MessagesAnnotation } from "@langchain/langgraph";
-import { ChatGoogleGenerativeAI } from "@langchain/google-gen-ai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ToolMessage, AIMessage, HumanMessage } from "@langchain/core/messages";
 import * as tools from "./tools.js";
 
@@ -8,6 +9,7 @@ const model = new ChatGoogleGenerativeAI({
     temperature: 0.5,
     model: "gemini-2.5-flash",
     maxTokens: 2048,
+    apiKey: (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '').trim(),
 });
 
 
@@ -64,3 +66,5 @@ const graph = new StateGraph(MessagesAnnotation)
 
 
 const agent = graph.compile()
+
+export { agent };

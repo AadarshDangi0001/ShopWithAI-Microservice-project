@@ -1,5 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
 import app from './src/app.js';
 import http from 'http';
 import initializeSocketServer from './src/sockets/socket.server.js';

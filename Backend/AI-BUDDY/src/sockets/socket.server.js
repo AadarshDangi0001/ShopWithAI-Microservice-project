@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import cookie from "cookie";
 import { agent } from "../agent/agent.js";
 
-async function initSocketServer(httpServer) {
+async function initializeSocketServer(httpServer) {
 
     const io = new Server(httpServer, {
         path: "/api/socket/socket.io/",

@@ -1,4 +1,4 @@
-import {tool} from 'langchain/core/tools';
+import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import axios from 'axios';
 
@@ -48,4 +48,4 @@ const addProductToCart = tool(async ({ productId, qty = 1, token }) => {
     })
 })
 
-export {searchProject,addProductToCart};
+export { searchProduct, addProductToCart };
