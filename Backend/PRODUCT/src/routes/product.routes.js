@@ -20,7 +20,6 @@ router.get('/seller', createAuthMiddleware(['seller']), getProductsBySeller);
 router.get('/:id', getProductById);
 
 router.patch('/:id', createAuthMiddleware(['seller']), updateProduct);
-
 router.delete('/:id', createAuthMiddleware(['seller']), deleteProduct);
 
 

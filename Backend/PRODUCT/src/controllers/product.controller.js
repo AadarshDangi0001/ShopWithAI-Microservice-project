@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Product from '../model/product.model.js';
 import { uploadImage } from '../services/imagekit.service.js';
+import { publishToQueue } from '../broker/borker.js';
 
 export async function createProduct(req, res) {
   if (!req.files?.length) {
