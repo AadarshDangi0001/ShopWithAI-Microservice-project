@@ -5,6 +5,7 @@ import initializeSocketServer from './src/sockets/socket.server.js';
 
 const httpServer = http.createServer(app);
 
+
 initializeSocketServer(httpServer);
 
 const PORT = process.env.PORT || 3005;
