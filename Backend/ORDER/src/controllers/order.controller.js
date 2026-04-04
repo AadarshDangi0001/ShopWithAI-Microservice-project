@@ -1,5 +1,6 @@
 import orderModel from "../models/order.model.js";
 import axios from "axios";
+import { publishToQueue } from "../broker/borker.js";
 
 export const createOrder = async (req, res) => {
     const user = req.user;
@@ -124,6 +125,12 @@ export const createOrder = async (req, res) => {
         console.error("Error creating order:", error);
 
         if (axios.isAxiosError(error)) {
+            if (error.code === "ECONNREFUSED") {
+                return res.status(503).json({
+                    error: "Downstream service unavailable (cart/product). Please ensure dependent services are running.",
+                });
+            }
+
             const status = error.response?.status;
 
             if (status === 401) {
@@ -146,6 +153,11 @@ export const createOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
     const user = req.user;
+    const authUserId = user?._id || user?.id;
+
+    if (!authUserId) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -153,12 +165,12 @@ export const getMyOrders = async (req, res) => {
 
     try {
         const orders = await orderModel
-            .find({ user: user._id })
+            .find({ user: authUserId })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
-        const totalOrders = await orderModel.countDocuments({ user: user._id });
+        const totalOrders = await orderModel.countDocuments({ user: authUserId });
         const totalPages = Math.ceil(totalOrders / limit);
 
         return res.status(200).json({
@@ -179,7 +191,12 @@ export const getMyOrders = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
     const user = req.user;
+    const authUserId = user?._id || user?.id;
     const orderId = req.params.id;
+
+    if (!authUserId) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
 
     try {
         const order = await orderModel.findById(orderId);
@@ -189,7 +206,7 @@ export const getOrderById = async (req, res) => {
 
         }
 
-        if (String(order.user) !== String(user?._id)) {
+        if (String(order.user) !== String(authUserId)) {
             return res.status(403).json({ error: "Forbidden: You can only access your own orders" });
         }
 
@@ -202,7 +219,12 @@ export const getOrderById = async (req, res) => {
 
 export const cancelOrder = async (req, res) => {
     const user = req.user;
+    const authUserId = user?._id || user?.id;
      const orderId = req.params.id;
+
+    if (!authUserId) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
      
      try {
         const order = await orderModel.findById(orderId);
@@ -210,7 +232,7 @@ export const cancelOrder = async (req, res) => {
             return res.status(404).json({ error: "Order not found" });
         }
 
-        if (String(order.user) !== String(user?._id)) {
+        if (String(order.user) !== String(authUserId)) {
             return res.status(403).json({ error: "Forbidden: You can only cancel your own orders" });
         }
 
@@ -235,14 +257,19 @@ export const cancelOrder = async (req, res) => {
 
 export const updateShippingAddress = async (req, res) => {
        const user = req.user;
+        const authUserId = user?._id || user?.id;
          const orderId = req.params.id;
+
+        if (!authUserId) {
+            return res.status(401).json({ error: "Authentication required" });
+        }
         try {
             const order = await orderModel.findById(orderId);
             if (!order) {
                 return res.status(404).json({ error: "Order not found" });
             }
 
-            if (String(order.user) !== String(user._id)) {
+            if (String(order.user) !== String(authUserId)) {
                 return res.status(403).json({ error: "Forbidden: You can only update your own orders" });
             }
 
