@@ -33,7 +33,17 @@ export function createAuthMiddleware(roles=["user"]) {
             if (!allowedRoles.includes(decoded.role)) {
                 return res.status(403).json({ error: 'Forbidden: insufficient permissions' });
             }
-            req.user = decoded;
+
+            const normalizedUserId = decoded._id || decoded.id;
+            if (!normalizedUserId) {
+                return res.status(401).json({ error: 'Invalid token payload: missing user id' });
+            }
+
+            req.user = {
+                ...decoded,
+                _id: normalizedUserId,
+                id: normalizedUserId,
+            };
             next();
         }
         catch (error) {

@@ -41,6 +41,11 @@ export const createPayment = async (req, res) => {
            return res.status(422).json({ error: "Invalid order amount" });
        }
 
+       const authenticatedUserId = req.user?._id || req.user?.id;
+       if (!authenticatedUserId) {
+           return res.status(401).json({ error: "Authentication required" });
+       }
+
          const order = await razorpay.orders.create({
              amount: Math.round(priceAmount * 100), // Convert to paise
              currency,
@@ -50,7 +55,7 @@ export const createPayment = async (req, res) => {
             const paymentRecord = await paymentModel.create({
                 order: orderId,
                 razorpayOrderId: order.id,
-                user: req.user._id,
+                user: authenticatedUserId,
                 price:{
                     amount: priceAmount,
                     currency,
@@ -71,7 +76,8 @@ export const createPayment = async (req, res) => {
                 message: "Payment order created successfully",
                 success: true,
                 orderId: order.id,
-                amount: order.amount,
+                amount: priceAmount,
+                razorpayAmount: order.amount,
                 currency: order.currency,
             });
 
