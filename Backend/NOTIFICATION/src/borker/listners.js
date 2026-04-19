@@ -1,5 +1,5 @@
 const { subscribeToQueue } = require("./borker");
-const { sendEmail } = require("../email");
+const sendEmail = require("../email");
 
 
 module.exports = function () {

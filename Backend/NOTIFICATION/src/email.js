@@ -1,23 +1,37 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 
+const useAppPassword = Boolean(process.env.EMAIL_PASS);
+
+const authConfig = useAppPassword
+  ? {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    }
+  : {
+      type: 'OAuth2',
+      user: process.env.EMAIL_USER,
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      refreshToken: process.env.REFRESH_TOKEN,
+    };
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  auth: {
-    type: 'OAuth2',
-    user: process.env.EMAIL_USER,
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken: process.env.REFRESH_TOKEN,
-  },
+  auth: authConfig,
 });
 
 // Verify the connection configuration
 transporter.verify((error, success) => {
   if (error) {
-    console.error('Error connecting to email server:', error);
+    console.error(
+      `Error connecting to email server (${useAppPassword ? 'app-password' : 'oauth2'}):`,
+      error
+    );
   } else {
-    console.log('Email server is ready to send messages');
+    console.log(
+      `Email server is ready to send messages (${useAppPassword ? 'app-password' : 'oauth2'})`
+    );
   }
 });
 
@@ -38,7 +52,5 @@ const sendEmail = async (to, subject, text, html) => {
     console.error('Error sending email:', error);
   }
 };
-
-sendEmail('aadarsh.vikaro@gmail.com', 'Test Email', 'This is a test email from Node.js using Nodemailer.', '<p>This is a <b>test email</b> from Node.js using Nodemailer.</p>');
 
 module.exports = sendEmail;
