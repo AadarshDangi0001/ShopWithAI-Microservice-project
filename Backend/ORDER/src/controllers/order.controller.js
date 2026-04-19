@@ -21,8 +21,8 @@ export const createOrder = async (req, res) => {
             country: shippingAddress.country,
         };
 
-        const cartServiceUrl = process.env.CART_SERVICE_URL || "http://localhost:3002";
-        const productServiceUrl = process.env.PRODUCT_SERVICE_URL || "http://localhost:3001";
+        const cartServiceUrl = process.env.CART_SERVICE_URL || "http://nova-alb-1851285713.ap-south-1.elb.amazonaws.com";
+        const productServiceUrl = process.env.PRODUCT_SERVICE_URL || "http://nova-alb-1851285713.ap-south-1.elb.amazonaws.com";
 
         // CART service identifies user from token and returns { message, cart, totals }.
         const cartResponse = await axios.get(`${cartServiceUrl}/api/cart`, {

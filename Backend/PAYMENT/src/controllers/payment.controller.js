@@ -27,7 +27,7 @@ export const createPayment = async (req, res) => {
            return res.status(400).json({ error: "orderId is required" });
        }
 
-       const orderResponse = await axios.get(`${process.env.ORDER_SERVICE_URL || "http://localhost:3003"}/api/orders/${orderId}`, {
+       const orderResponse = await axios.get(`${process.env.ORDER_SERVICE_URL || "http://nova-alb-1851285713.ap-south-1.elb.amazonaws.com"}/api/orders/${orderId}`, {
            headers: token ? { Authorization: `Bearer ${token}` } : {},
        });
 
